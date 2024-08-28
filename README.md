@@ -41,7 +41,7 @@ title,body,contact_id
 To send the Base64 encoded CSV content using a POST request to the `/send_csv` endpoint, you can use the following cURL command:
 
 ```bash
-curl -s -X POST "http://35.247.39.169:8765/send_csv" \
+curl -s -X POST "http://localhost:8000/send_csv" \
 -H "Content-Type: application/json" \
 -d "{\"content\":\"dGl0bGUsYm9keSxjb250YWN0X2lkCiJXZWxjb21lIiwiSGVsbG8gYW5kIHdlbGNvbWUgdG8gb3VyIHNlcnZpY2UhIiwiODIyODMwNjc4IgoiUmVtaW5kZXIiLCJEb24ndCBmb3JnZXQgYWJvdXQgeW91ciBhcHBvaW50bWVudCB0b21vcnJvdyEiLCI4MjI4MzA2NzgiCg==\"}"
 ```
