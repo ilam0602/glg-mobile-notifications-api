@@ -5,6 +5,8 @@
     "Body": {
         "title" : "example title",
         "body" : "example body",
-        "contact_id" : "123456789"
+        "contact_id" : "123456789",
+        "confetti": "test_confetti",
+        "confetti_body": "test_confetti_body"
     }
 }

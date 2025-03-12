@@ -75,22 +75,41 @@ def send_notification():
         title = data.get('title')
         body = data.get('body')
         contact_id = data.get('contact_id')
+        confetti = data.get('confetti')
+        confettiBody = data.get('confetti_body')
         
-        # Validate input
+        # Validate required input fields
         if not title or not body or not contact_id:
             return jsonify({'error': 'Title, body, and contact_id are required fields'}), 400
         
-        # Call the function to send the notification
-        responses, error = send_fcm_notification(title, body, contact_id)
+        # Query for the user document in Firestore with the matching contact_id
+        users_ref = db.collection('users_test')
+        query = users_ref.where('contact_id', '==', contact_id).limit(1).get()
+        if not query:
+            return jsonify({'error': f'No user found with contact_id: {contact_id}'}), 404
         
+        user_doc_ref = query[0].reference
+        
+        # Upload the notification data to the 'pending_notifications' subcollection
+        notification_data = {
+            'title': title,
+            'body': body,
+            'confetti': confetti,
+            'confetti_body': confettiBody,
+            'timestamp': firestore.SERVER_TIMESTAMP
+        }
+        user_doc_ref.collection('pending_notifications').add(notification_data)
+        
+        # Send the FCM notification
+        responses, error = send_fcm_notification(title, body, contact_id)
         if error:
             return jsonify({'error': error}), 500
         
         # Return success response
         return jsonify({'success': True, 'message_ids': responses}), 200
     except Exception as e:
-        # Handle any exceptions that occur
         return jsonify({'error': str(e)}), 500
+
 @app.route('/send_csv', methods=['POST'])
 def send_notifications_from_csv():
     data = request.json
@@ -109,14 +128,49 @@ def send_notifications_from_csv():
         csv_input = csv.DictReader(stream)
         
         results = []
+
         for row in csv_input:
+            # Extract the fields from each CSV row
             title = row.get('title')
             body = row.get('body')
             contact_id = row.get('contact_id')
-            
+            confetti = row.get('confetti')
+            confetti_body = row.get('confetti_body')
+
+            # Basic validation
             if not title or not body or not contact_id:
-                continue  # Skip rows with missing data
+                # Skip rows missing required fields
+                results.append({
+                    'contact_id': contact_id if contact_id else 'missing contact_id',
+                    'error': 'Missing title, body, or contact_id'
+                })
+                continue
             
+            # Query Firestore for the matching user document
+            users_ref = db.collection('users_test')
+            query = users_ref.where('contact_id', '==', contact_id).limit(1).get()
+            if not query:
+                # No matching user found, log the error and continue
+                results.append({
+                    'contact_id': contact_id,
+                    'error': f'No user found with contact_id: {contact_id}'
+                })
+                continue
+
+            # Reference to the user doc
+            user_doc_ref = query[0].reference
+            
+            # Upload the notification data to the subcollection
+            notification_data = {
+                'title': title,
+                'body': body,
+                'confetti': confetti,
+                'confetti_body': confetti_body,
+                'timestamp': firestore.SERVER_TIMESTAMP
+            }
+            user_doc_ref.collection('pending_notifications').add(notification_data)
+
+            # Send the FCM notification
             responses, error = send_fcm_notification(title, body, contact_id)
             if error:
                 results.append({'contact_id': contact_id, 'error': error})
@@ -124,9 +178,11 @@ def send_notifications_from_csv():
                 results.append({'contact_id': contact_id, 'message_ids': responses})
         
         return jsonify({'results': results}), 200
+
     except Exception as e:
         print(e)
-        return jsonify({'error': 'Failed to process CSV'}), 500
+        return jsonify({'error': f'Failed to process CSV: {str(e)}'}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=8000)

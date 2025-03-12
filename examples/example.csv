@@ -1,4 +1,4 @@
-title,body,contact_id
-"Welcome","Hello and welcome to our service!","123456789"
-"Reminder","Don't forget about your appointment tomorrow!","123456789"
-"Reminder3","Don't forget about your appointment tomorrow!3","123456789"
+title,body,contact_id,confetti,confetti_body
+"Welcome","Hello and welcome to our service!","123456789","test_confetti","test_confetti_body"
+"Reminder","Don't forget about your appointment tomorrow!","123456789","test_confetti","test_confetti_body"
+"Reminder3","Don't forget about your appointment tomorrow!3","123456789","test_confetti","test_confetti_body"
